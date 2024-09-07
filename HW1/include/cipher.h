@@ -16,7 +16,7 @@ public:
     const static int SIZE = 26;
 
     /**
-     * @brief Construct a new Vigenere Cipher object
+     * @brief Construct a new Vigenere Cipher object which created the lookup_table.
      *
      */
     VigenereCipher();
