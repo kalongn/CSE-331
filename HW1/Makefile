@@ -4,7 +4,6 @@ CXXFLAGS := -Iinclude -Wall -Wextra -std=c++11
 
 # Directories
 SRCD := src
-INCD := include
 BLDD := build
 BIND := bin
 
