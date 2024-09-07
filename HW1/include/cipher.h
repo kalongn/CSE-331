@@ -9,14 +9,11 @@
 
 class VigenereCipher {
 private:
-    char lookup_table[26][26];
-
+    const static int ALPHABET_SIZE = 26;
 public:
-    // 26 letters in the english alphabet
-    const static int SIZE = 26;
 
     /**
-     * @brief Construct a new Vigenere Cipher object which created the lookup_table.
+     * @brief Construct a new Vigenere Cipher object.
      *
      */
     VigenereCipher();
