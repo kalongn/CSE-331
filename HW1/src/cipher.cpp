@@ -8,7 +8,7 @@ VigenereCipher::VigenereCipher() {
     }
 }
 
-void VigenereCipher::encode(std::string plain_text, std::string key) {
+std::string VigenereCipher::encode(std::string plain_text, std::string key) {
     const int plain_text_length = plain_text.size();
     const int key_length = key.size();
 
@@ -28,13 +28,13 @@ void VigenereCipher::encode(std::string plain_text, std::string key) {
             result += current_character;
         }
     }
-    std::cout << result;
+    return result;
 }
 
-void VigenereCipher::decode(std::string cipher_text, std::string key) {
+std::string VigenereCipher::decode(std::string cipher_text, std::string key) {
 
 }
 
-void VigenereCipher::break_cipher(std::string cipher_text, int key_length) {
+std::string VigenereCipher::break_cipher(std::string cipher_text, int key_length) {
 
 }

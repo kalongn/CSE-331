@@ -28,8 +28,11 @@ public:
      *      The input plain text that needs to be encode.
      * @param key
      *      The key that this input plain text will encode with.
+     * 
+     * @return std::string
+     *      The encoded cipher text.
      */
-    void encode(std::string plain_text, std::string key);
+    std::string encode(std::string plain_text, std::string key);
 
     /**
      * @brief Decode a cipher text with the key given and print out the plain text.
@@ -38,8 +41,11 @@ public:
      *      The input cipher text that needs to be decode.
      * @param key
      *      The key that this input cipher text will decode with.
+     * 
+     * @return std::string
+     *      The decoded cipher text.
      */
-    void decode(std::string cipher_text, std::string key);
+    std::string decode(std::string cipher_text, std::string key);
 
     /**
      * @brief Break a cipher text into plain text doing frequency analysis and print out the plain text.
@@ -48,8 +54,11 @@ public:
      *      The input cipher text that needs to be break.
      * @param key_length
      *      The optional parameter of providing the length of the key, default to 0 means no key length provided.
+     * 
+     * @return std::string
+     *      The brute force decoded cipher text.
      */
-    void break_cipher(std::string cipher_text, int key_length = 0);
+    std::string break_cipher(std::string cipher_text, int key_length = 0);
 };
 
 #endif
