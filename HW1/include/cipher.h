@@ -7,51 +7,49 @@
 #include <utility>
 #include <map>
 
-namespace CIPHER {
-    class VigenereCipher {
-    private:
-        char lookup_table[26][26];
+class VigenereCipher {
+private:
+    char lookup_table[26][26];
 
-    public:
-        // 26 letters in the english alphabet
-        const static int SIZE = 26;
+public:
+    // 26 letters in the english alphabet
+    const static int SIZE = 26;
 
-        /**
-         * @brief Construct a new Vigenere Cipher object
-         * 
-         */
-        VigenereCipher();
+    /**
+     * @brief Construct a new Vigenere Cipher object
+     *
+     */
+    VigenereCipher();
 
-        /**
-         * @brief Encode a plain text with the key given and print out the cipher text.
-         * 
-         * @param plain_text 
-         *      The input plain text that needs to be encode.
-         * @param key 
-         *      The key that this input plain text will encode with.
-         */
-        void encode(std::string plain_text, std::string key);
+    /**
+     * @brief Encode a plain text with the key given and print out the cipher text.
+     *
+     * @param plain_text
+     *      The input plain text that needs to be encode.
+     * @param key
+     *      The key that this input plain text will encode with.
+     */
+    void encode(std::string plain_text, std::string key);
 
-        /**
-         * @brief Decode a cipher text with the key given and print out the plain text.
-         * 
-         * @param cipher_text 
-         *      The input cipher text that needs to be decode.
-         * @param key 
-         *      The key that this input cipher text will decode with.
-         */
-        void decode(std::string cipher_text, std::string key);
+    /**
+     * @brief Decode a cipher text with the key given and print out the plain text.
+     *
+     * @param cipher_text
+     *      The input cipher text that needs to be decode.
+     * @param key
+     *      The key that this input cipher text will decode with.
+     */
+    void decode(std::string cipher_text, std::string key);
 
-        /**
-         * @brief Break a cipher text into plain text doing frequency analysis and print out the plain text.
-         * 
-         * @param cipher_text 
-         *      The input cipher text that needs to be break.
-         * @param key_length 
-         *      The optional parameter of providing the length of the key, default to 0 means no key length provided.
-         */
-        void break_cipher(std::string cipher_text, int key_length = 0);
-    };
-}
+    /**
+     * @brief Break a cipher text into plain text doing frequency analysis and print out the plain text.
+     *
+     * @param cipher_text
+     *      The input cipher text that needs to be break.
+     * @param key_length
+     *      The optional parameter of providing the length of the key, default to 0 means no key length provided.
+     */
+    void break_cipher(std::string cipher_text, int key_length = 0);
+};
 
 #endif
