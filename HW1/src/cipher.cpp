@@ -1,6 +1,12 @@
 #include "cipher.h"
 
 VigenereCipher::VigenereCipher() {
+    for (int i = 0; i < VigenereCipher::SIZE; i++) {
+        for (int j = 0; j < VigenereCipher::SIZE; j++) {
+            lookup_table[i][j] = 'A' + ((i + j) % VigenereCipher::SIZE);
+        }
+    }
+}
 
 }
 
