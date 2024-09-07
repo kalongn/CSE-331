@@ -8,26 +8,27 @@ VigenereCipher::VigenereCipher() {
     }
 }
 
-std::string VigenereCipher::key_to_key_stream(int length, std::string key) {
-    if (length < key.size()) {
-        key = key.substr(0, length);
-        return key;
-    }
-    int repeat_all = length / key.size();
-    std::string result;
-    while (repeat_all > 0) {
-        result += key;
-        repeat_all--;
-    }
-    int repeat_char = length % key.size();
-    for (int i = 0; i < repeat_char; i++) {
-        result += key.at(i);
-    }
-    return result;
-}
-
 void VigenereCipher::encode(std::string plain_text, std::string key) {
+    const int plain_text_length = plain_text.size();
+    const int key_length = key.size();
 
+    std::string result;
+    int index_of_key = 0;
+    for (int i = 0; i < plain_text_length; i++) {
+        char current_character = plain_text.at(i);
+        if (isalpha(current_character)) {
+            char current_key_character = key.at(index_of_key);
+            if (islower(current_character) > 0) {
+                result += tolower(lookup_table[toupper(current_character) - 'A'][current_key_character - 'A']);
+            } else {
+                result += lookup_table[current_character - 'A'][current_key_character - 'A'];
+            }
+            index_of_key = (index_of_key + 1) % key_length;
+        } else {
+            result += current_character;
+        }
+    }
+    std::cout << result;
 }
 
 void VigenereCipher::decode(std::string cipher_text, std::string key) {
