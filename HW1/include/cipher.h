@@ -11,6 +11,18 @@ class VigenereCipher {
 private:
     char lookup_table[26][26];
 
+    /**
+     * @brief Given the length of an input text (cipher or plain), return the key stream that matches that length.
+     * 
+     * @param length
+     *      The length of the input text (cipher or plain).
+     * @param key 
+     *      The key itself.
+     * @return std::string 
+     *      The key stream that matches that length
+     */
+    std::string key_to_key_stream(int length, std::string key);
+
 public:
     // 26 letters in the english alphabet
     const static int SIZE = 26;
