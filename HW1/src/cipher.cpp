@@ -128,5 +128,5 @@ std::string VigenereCipher::break_cipher(const std::string &cipher_text, int key
     for (auto const &column : columns) {
         predict_key.push_back(find_key(column));
     }
-    return decode(cipher_text, predict_key);
+    return predict_key + '\n' + decode(cipher_text, predict_key);
 }
