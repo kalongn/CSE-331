@@ -11,6 +11,14 @@
 class VigenereCipher {
 private:
     const static int ALPHABET_SIZE = 26;
+    const std::map<char, double> ENGLISH_LETTER_FREQ = {
+        {'A', 0.082}, {'B', 0.015}, {'C', 0.028}, {'D', 0.043}, {'E', 0.13},
+        {'F', 0.022}, {'G', 0.02}, {'H', 0.061}, {'I', 0.07}, {'J', 0.0015},
+        {'K', 0.0077}, {'L', 0.04}, {'M', 0.024}, {'N', 0.067}, {'O', 0.075},
+        {'P', 0.019}, {'Q', 0.00095}, {'R', 0.06}, {'S', 0.063}, {'T', 0.091},
+        {'U', 0.028}, {'V', 0.0098}, {'W', 0.024}, {'X', 0.0015}, {'Y', 0.02},
+        {'Z', 0.00074}
+    };
 
     /**
      * @brief Return the simplify string that only consist of alphabet characters.
@@ -23,18 +31,62 @@ private:
     std::string simplify_text(const std::string &input);
 
     /**
-     * @brief Return the a vector of splitted strings each having split_length.
-     * 
-     * @details The last one may not have the exact same size by within the range of [1, split_length].
-     * 
-     * @param input 
-     *      The input string you want to be splitted.
-     * @param split_length 
-     *      The amount of character in each split string.
-     * @return std::vector<std::string> 
-     *      The vector of string with each split string as elements.
+     * @brief Split text by columns such that every ith character of the key_length is in the same string.
+     *
+     * @param cipher_text
+     *      The input should be a ciper text.
+     * @param key_length
+     *      The length of the key.
+     * @return std::vector<std::string>
+     *      The vector of columns of strings.
      */
-    std::vector<std::string> split_text(const std::string &input, int split_length);
+    std::vector<std::string> split_columns(const std::string &cipher_text, int key_length);
+
+    /**
+     * @brief Solving a monotonic shift aka caesar_shift.
+     *
+     * @param column
+     *      The column of the cipher text provided.
+     * @param shift
+     *      The shift we need to shift these letters by.
+     * @return std::string
+     *      return the column after shifted.
+     */
+    std::string caesar_shift(const std::string &column, int shift);
+
+    /**
+     * @brief Return the relative frequency of the characters of the decoded column.
+     *
+     * @param decoded_column
+     *      The column text after passing into a caesar_shift.
+     * @return std::map<char, double>
+     *      The relative frequency in a map.
+     */
+    std::map<char, double> find_relative_frequency(const std::string &decoded_column);
+
+    /**
+     * @brief Return the double value of a chi squared test.
+     *
+     * @details The chi square test is comparing the english language distribution (found on the internet) to the one
+     *          after we shifted and trying to find the best match via the chi squared goodness of fit test.
+     *
+     * @param relative_frequency
+     *      The actual relative frequency of the english alphabet character.
+     * @return double
+     *      The chi squared value we obtain from this fitness test.
+     */
+    double chi_squared_test(const std::map<char, double> &relative_frequency);
+
+    /**
+     * @brief Find the most appropriate character for the specific column of cipher text.
+     *
+     * @param column
+     *      The indiviual column of the ciphertext.
+     * @return char
+     *      The character that this column is shifted by.
+     */
+    char find_key(const std::string &column);
+
 
 public:
 
