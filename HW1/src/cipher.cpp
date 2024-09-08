@@ -1,5 +1,8 @@
 #include "cipher.h"
 
+static double min_avg_chi_squared_value = MAXFLOAT;
+static double running_avg_chi_squared = 0.0;
+
 VigenereCipher::VigenereCipher() {}
 
 std::string VigenereCipher::simplify_text(const std::string &input) {
@@ -67,6 +70,7 @@ char VigenereCipher::find_key(const std::string &column) {
             best_shift = shift;
         }
     }
+    running_avg_chi_squared += min_chi_squared;
     return best_shift + 'A';
 }
 
@@ -119,14 +123,28 @@ std::string VigenereCipher::decode(const std::string &cipher_text, const std::st
 
 std::string VigenereCipher::break_cipher(const std::string &cipher_text, int key_length) {
     std::string simple_text = simplify_text(cipher_text);
+    int loop_index = 1;
     if (key_length == 0) {
-        // need to iterate each key length (brute force)
-        return "";
+        loop_index = 500;
+        key_length = 1;
     }
-    std::vector<std::string> columns = split_columns(simple_text, key_length);
-    std::string predict_key;
-    for (auto const &column : columns) {
-        predict_key.push_back(find_key(column));
+    std::string predict_key, potential_output;
+    std::string best_key, best_output;
+    for (int i = 0; i < loop_index; i++) {
+        std::vector<std::string> columns = split_columns(simple_text, key_length);
+        for (auto const &column : columns) {
+            predict_key.push_back(find_key(column));
+        }
+        potential_output = decode(cipher_text, predict_key);
+        running_avg_chi_squared = running_avg_chi_squared / columns.size();
+        if (running_avg_chi_squared < min_avg_chi_squared_value) {
+            min_avg_chi_squared_value = running_avg_chi_squared;
+            running_avg_chi_squared = 0.0;
+            best_key = predict_key;
+            best_output = potential_output;
+        }
+        predict_key = "";
+        key_length++;
     }
-    return predict_key + '\n' + decode(cipher_text, predict_key);
+    return best_key + '\n' + best_output;
 }
