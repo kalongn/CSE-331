@@ -28,6 +28,7 @@ int main(int argc, char *argv[]) {
             key_length_int = stoi(key_length);
         } catch (const std::exception &e) {
             std::cerr << e.what() << '\n';
+            return 1;
         }
         cout << cipher.break_cipher(cipher_text, key_length_int);
         break;
