@@ -3,7 +3,7 @@ using namespace std;
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
-        cout << "1: enode \n 2: decode \n 3: break with length \n 4: break with brute force";
+        cout << "1: enode \n2: decode \n3: break with length \n4: break with brute force";
         return 1;
     }
     VigenereCipher cipher;
