@@ -1,10 +1,11 @@
 #include "cipher.h"
+using namespace std;
 
 VigenereCipher::VigenereCipher() {}
 
-std::string VigenereCipher::simplify_text(const std::string &input) {
+string VigenereCipher::simplify_text(const string &input) {
     int n = input.size();
-    std::string result;
+    string result;
     for (auto i = 0; i < n; i++) {
         char current_character = input.at(i);
         if (isalpha(current_character)) {
@@ -14,8 +15,8 @@ std::string VigenereCipher::simplify_text(const std::string &input) {
     return result;
 }
 
-std::vector<std::string> VigenereCipher::split_columns(const std::string &cipher_text, int key_length) {
-    std::vector<std::string> result(key_length);
+vector<string> VigenereCipher::split_columns(const string &cipher_text, int key_length) {
+    vector<string> result(key_length);
     for (size_t i = 0; i < cipher_text.length(); i++) {
         result[i % key_length] += cipher_text[i];
     }
@@ -23,28 +24,28 @@ std::vector<std::string> VigenereCipher::split_columns(const std::string &cipher
 }
 
 
-std::string VigenereCipher::caesar_shift(const std::string &column, int shift) {
-    std::string result;
+string VigenereCipher::caesar_shift(const string &column, int shift) {
+    string result;
     for (char c : column) {
         result.push_back((c - shift - 'A' + 26) % 26 + 'A');
     }
     return result;
 }
 
-std::map<char, double> VigenereCipher::find_relative_frequency(const std::string &decoded_column) {
-    std::map<char, int> freq;
+map<char, double> VigenereCipher::find_relative_frequency(const string &decoded_column) {
+    map<char, int> freq;
     int length_of_text = decoded_column.size();
     for (char c : decoded_column) {
         freq[c]++;
     }
-    std::map<char, double> result;
+    map<char, double> result;
     for (auto &pair : freq) {
         result[pair.first] = 1.0 * pair.second / length_of_text;
     }
     return result;
 }
 
-double VigenereCipher::chi_squared_test(const std::map<char, double> &relative_frequency) {
+double VigenereCipher::chi_squared_test(const map<char, double> &relative_frequency) {
     double result = 0.0;
     for (auto &pair : ENGLISH_LETTER_FREQ) {
         char exp_char = pair.first;
@@ -56,11 +57,11 @@ double VigenereCipher::chi_squared_test(const std::map<char, double> &relative_f
 }
 
 
-char VigenereCipher::find_key(const std::string &column) {
+char VigenereCipher::find_key(const string &column) {
     double min_chi_squared = MAXFLOAT;
     char best_shift = 0;
     for (auto shift = 0; shift < ALPHABET_SIZE; shift++) {
-        std::map<char, double> rel_freq = find_relative_frequency(caesar_shift(column, shift));
+        map<char, double> rel_freq = find_relative_frequency(caesar_shift(column, shift));
         double chi_square = chi_squared_test(rel_freq);
         if (chi_square < min_chi_squared) {
             min_chi_squared = chi_square;
@@ -70,8 +71,8 @@ char VigenereCipher::find_key(const std::string &column) {
     return best_shift + 'A';
 }
 
-double VigenereCipher::calculate_index_of_coincidence(const std::string &column) {
-    std::vector<int> freq(ALPHABET_SIZE, 0);
+double VigenereCipher::calculate_index_of_coincidence(const string &column) {
+    vector<int> freq(ALPHABET_SIZE, 0);
     for (char c : column) {
         freq[toupper(c) - 'A']++;
     }
@@ -85,11 +86,11 @@ double VigenereCipher::calculate_index_of_coincidence(const std::string &column)
 }
 
 
-std::string VigenereCipher::encode(const std::string &plain_text, const std::string &key) {
+string VigenereCipher::encode(const string &plain_text, const string &key) {
     const int plain_text_length = plain_text.size();
     const int key_length = key.size();
 
-    std::string result;
+    string result;
     int index_of_key = 0;
     for (auto i = 0; i < plain_text_length; i++) {
         char current_character = plain_text.at(i);
@@ -108,11 +109,11 @@ std::string VigenereCipher::encode(const std::string &plain_text, const std::str
     return result;
 }
 
-std::string VigenereCipher::decode(const std::string &cipher_text, const std::string &key) {
+string VigenereCipher::decode(const string &cipher_text, const string &key) {
     const int cipher_text_length = cipher_text.size();
     const int key_length = key.size();
 
-    std::string result;
+    string result;
     int index_of_key = 0;
     for (auto i = 0; i < cipher_text_length; i++) {
         char current_character = cipher_text.at(i);
@@ -131,22 +132,22 @@ std::string VigenereCipher::decode(const std::string &cipher_text, const std::st
     return result;
 }
 
-std::string VigenereCipher::break_cipher(const std::string &cipher_text, int key_length) {
+string VigenereCipher::break_cipher(const string &cipher_text, int key_length) {
     if (cipher_text == "") {
         return cipher_text;
     }
-    std::string simple_text = simplify_text(cipher_text);
+    string simple_text = simplify_text(cipher_text);
     if (key_length == 0) {
         key_length = 1;
         while (true) {
-            std::vector<std::string> columns = split_columns(simple_text, key_length);
+            vector<string> columns = split_columns(simple_text, key_length);
             double aggregate_IC = 0.0;
             for (size_t i = 0; i < columns.size(); i++) {
                 aggregate_IC += calculate_index_of_coincidence(columns.at(i));
             }
             aggregate_IC /= key_length;
             if (isnan(aggregate_IC)) {
-                std::cout << "Cannot break the cipher text. \nReason: cannot identify the key length using index of coincidence.\n";
+                cout << "Cannot break the cipher text. \nReason: cannot identify the key length using index of coincidence.\n";
                 return "";
             }
             if (aggregate_IC >= ENGLISH_INDEX_COINCIDENCE_LB) {
@@ -156,8 +157,8 @@ std::string VigenereCipher::break_cipher(const std::string &cipher_text, int key
         }
     }
 
-    std::string predict_key, output;
-    std::vector<std::string> columns = split_columns(simple_text, key_length);
+    string predict_key, output;
+    vector<string> columns = split_columns(simple_text, key_length);
     for (auto const &column : columns) {
         predict_key.push_back(find_key(column));
     }
