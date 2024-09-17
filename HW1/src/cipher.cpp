@@ -74,6 +74,20 @@ char VigenereCipher::find_key(const std::string &column) {
     return best_shift + 'A';
 }
 
+double VigenereCipher::calculate_index_of_coincidence(const std::string &column) {
+    std::vector<int> freq(ALPHABET_SIZE, 0);
+    for (char c : column) {
+        freq[toupper(c) - 'A']++;
+    }
+
+    double result = 0.0;
+    for (auto count : freq) {
+        result += count * (count - 1);
+    }
+    result /= column.size() * (column.size() - 1.0) / ALPHABET_SIZE;
+    return result;
+}
+
 
 std::string VigenereCipher::encode(const std::string &plain_text, const std::string &key) {
     const int plain_text_length = plain_text.size();
@@ -122,29 +136,44 @@ std::string VigenereCipher::decode(const std::string &cipher_text, const std::st
 }
 
 std::string VigenereCipher::break_cipher(const std::string &cipher_text, int key_length) {
-    std::string simple_text = simplify_text(cipher_text);
-    int loop_index = 1;
-    if (key_length == 0) {
-        loop_index = 500;
-        key_length = 1;
+    if (cipher_text == "") {
+        return cipher_text;
     }
+    std::string simple_text = simplify_text(cipher_text);
+    if (key_length == 0) {
+        key_length = 1;
+        while (true) {
+            std::vector<std::string> columns = split_columns(simple_text, key_length);
+            double aggregate_IC = 0.0;
+            for (size_t i = 0; i < columns.size(); i++) {
+                aggregate_IC += calculate_index_of_coincidence(columns.at(i));
+            }
+            aggregate_IC /= key_length;
+            if (isnan(aggregate_IC)) {
+                std::cout << "Cannot break the cipher text. \nReason: cannot identify the key length using index of coincidence.\n";
+                return "";
+            }
+            if (aggregate_IC >= ENGLISH_INDEX_COINCIDENCE_LB) {
+                break;
+            }
+            key_length++;
+        }
+    }
+
     std::string predict_key, potential_output;
     std::string best_key, best_output;
-    for (int i = 0; i < loop_index; i++) {
-        std::vector<std::string> columns = split_columns(simple_text, key_length);
-        for (auto const &column : columns) {
-            predict_key.push_back(find_key(column));
-        }
-        potential_output = decode(cipher_text, predict_key);
-        running_avg_chi_squared = running_avg_chi_squared / columns.size();
-        if (running_avg_chi_squared < min_avg_chi_squared_value) {
-            min_avg_chi_squared_value = running_avg_chi_squared;
-            running_avg_chi_squared = 0.0;
-            best_key = predict_key;
-            best_output = potential_output;
-        }
-        predict_key = "";
-        key_length++;
+    std::vector<std::string> columns = split_columns(simple_text, key_length);
+    for (auto const &column : columns) {
+        predict_key.push_back(find_key(column));
     }
+    potential_output = decode(cipher_text, predict_key);
+    running_avg_chi_squared = running_avg_chi_squared / columns.size();
+    if (running_avg_chi_squared < min_avg_chi_squared_value) {
+        min_avg_chi_squared_value = running_avg_chi_squared;
+        running_avg_chi_squared = 0.0;
+        best_key = predict_key;
+        best_output = potential_output;
+    }
+    predict_key = "";
     return best_key + '\n' + best_output;
 }

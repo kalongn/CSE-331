@@ -11,6 +11,8 @@
 class VigenereCipher {
 private:
     const static int ALPHABET_SIZE = 26;
+    const double ENGLISH_INDEX_COINCIDENCE = 1.73;
+    const double ENGLISH_INDEX_COINCIDENCE_LB = ENGLISH_INDEX_COINCIDENCE - ENGLISH_INDEX_COINCIDENCE * 0.1;
     const std::map<char, double> ENGLISH_LETTER_FREQ = {
         {'A', 0.082}, {'B', 0.015}, {'C', 0.028}, {'D', 0.043}, {'E', 0.127},
         {'F', 0.022}, {'G', 0.02}, {'H', 0.061}, {'I', 0.07}, {'J', 0.0015},
@@ -86,6 +88,16 @@ private:
      *      The character that this column is shifted by.
      */
     char find_key(const std::string &column);
+
+    /**
+     * @brief Calculate the index of coincidence of a column.
+     *
+     * @param column
+     *      The indiviual column of the ciphertext.
+     * @return double
+     *      The value of the index of coincidence
+     */
+    double calculate_index_of_coincidence(const std::string &column);
 
 
 public:
