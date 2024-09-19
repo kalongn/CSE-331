@@ -85,6 +85,27 @@ double VigenereCipher::calculate_index_of_coincidence(const string &column) {
     return result;
 }
 
+string VigenereCipher::find_repeat_pattern(const string &input) {
+    int n = input.length();
+
+    for (int length = 1; length <= n / 2; length++) {
+        if (n % length == 0) {
+            string pattern = input.substr(0, length);
+            bool is_reapting = true;
+            for (int i = length; i < n; i += length) {
+                if (input.substr(i, length) != pattern) {
+                    is_reapting = false;
+                    break;
+                }
+            }
+            if (is_reapting) {
+                return pattern;
+            }
+        }
+    }
+    return input;
+}
+
 
 string VigenereCipher::encode(const string &plain_text, const string &key) {
     const int plain_text_length = plain_text.size();
@@ -162,6 +183,7 @@ string VigenereCipher::break_cipher(const string &cipher_text, int key_length) {
     for (auto const &column : columns) {
         predict_key.push_back(find_key(column));
     }
+    predict_key = find_repeat_pattern(predict_key);
     output = decode(cipher_text, predict_key);
     return predict_key + '\n' + output;
 }

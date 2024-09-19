@@ -99,6 +99,17 @@ private:
      */
     double calculate_index_of_coincidence(const std::string &column);
 
+    /**
+     * @brief Return the string if there's a repeating pattern within the input.
+     * @details
+     *      It aims to address the issues where the predicted key is a repeating pattern of the actual keys due to statistic.
+     *
+     * @param input
+     *      The input string (the predict key).
+     * @return std::string
+     *      The output string is either if a repeating pattern is found or the original string if not found.
+     */
+    std::string find_repeat_pattern(const std::string &input);
 
 public:
 
