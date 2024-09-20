@@ -158,6 +158,7 @@ string VigenereCipher::break_cipher(const string &cipher_text, int key_length) {
         return cipher_text;
     }
     string simple_text = simplify_text(cipher_text);
+    bool need_small_key = key_length == 0;
     if (key_length == 0) {
         key_length = 1;
         while (true) {
@@ -183,7 +184,9 @@ string VigenereCipher::break_cipher(const string &cipher_text, int key_length) {
     for (auto const &column : columns) {
         predict_key.push_back(find_key(column));
     }
-    predict_key = find_repeat_pattern(predict_key);
+    if (need_small_key) {
+        predict_key = find_repeat_pattern(predict_key);
+    }
     output = decode(cipher_text, predict_key);
     return predict_key + '\n' + output;
 }
