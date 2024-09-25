@@ -1,6 +1,6 @@
 # Compiler and flags
 CXX := g++
-CXXFLAGS := -Iinclude -Wall -Wextra -std=c++11 -O3
+CXXFLAGS := -Iinclude -I/opt/homebrew/opt/openssl/include -Wall -Wextra -std=c++11 -O3
 
 # Directories
 SRCD := src
@@ -8,7 +8,7 @@ BLDD := build
 BIND := bin
 
 # Executable name
-TARGET := vigcip
+TARGET := pc
 
 # Find all .cpp files in the src directory
 SRCF := $(wildcard $(SRCD)/*.cpp)
@@ -22,7 +22,7 @@ all: $(BIND)/$(TARGET)
 # Linking
 $(BIND)/$(TARGET): $(OBJF)
 	@mkdir -p $(BIND)
-	$(CXX) $(OBJF) -o $@
+	$(CXX) $(OBJF) -L/opt/homebrew/opt/openssl/lib -lcrypto -o $@
 
 # Compiling
 $(BLDD)/%.o: $(SRCD)/%.cpp

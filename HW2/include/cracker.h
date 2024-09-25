@@ -2,15 +2,93 @@
 #ifndef CRACKER_H
 #define CRACKER_H
 
-#include <iostream>
 #include <string>
 #include <utility>
 #include <vector>
 #include <map>
+#include <mutex>
+#include <thread>
+#include <chrono>
+#include <iomanip>
+#include <iostream>
+#include <fstream>
+#include <sstream>
 
+#include <openssl/evp.h>
+
+using namespace std;
 class PasswordCracker {
 private:
+    const static int SALT_LENGTH = 4;
+    const static int MAX_BRUTE_LENGTH = 4;
+    const string VALID_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const int VALID_CHARS_LENGTH = VALID_CHARS.length();
+
+    ifstream input_file;
+    ofstream output_file;
+    vector<vector<string>> data;
+
+    unordered_map<string, string> hashed_to_password;
+    std::mutex mutex;
+
+    /**
+     * @brief Compute the MD5 hashes for for the input string, and return a string of the hash.
+     *
+     * @param input
+     *      The input string.
+     * @return std::string
+     *      The hashed output string.
+     */
+    string compute_MD5(const string &input);
+
+    /**
+     * @brief Read the input csv file given the path.
+     *
+     * @details Each line will be stored in data vector.
+     *
+     * @param path
+     *      The relative path during execution to the file.
+     * @return int
+     *      0 == execute successfully, 1 == file cannot open.
+     */
+    int read_csv_file(const string &path);
+
+    /**
+     * @brief Generate string up to certain length with all combination.
+     * @details This is a recursive methods.
+     *
+     * @param current
+     *      the current String of where it is, to start the recurions use "" as input.
+     */
+    void generate_string_bf(string current);
+
+    /**
+     * @brief This is a thread function which allow us to divided the entire thing into segment such that we get
+     *      faster time computing all MD5 hash by bruteforce.
+     *
+     * @param begin
+     *      the index of the VALID_ARGS we want to start with.
+     * @param end
+     *      the index of the VALID_ARGS we want to stop at.
+     */
+    void worker_task_bf(int begin, int end);
+
 public:
+    /**
+     * @brief Construct a new Password Cracker object.
+     *
+     */
+    PasswordCracker();
+
+    /**
+     * @brief Attempt to brute for all unsalted hashed password with <= 4 letter in length.
+     * @details Task 1 Code. This function will also write an output file with ./output/task1.csv
+     *
+     * @param path
+     *      The relative path to the file of password we are reading from.
+     */
+    void brute_force(const string &path);
+
 };
 
 #endif
