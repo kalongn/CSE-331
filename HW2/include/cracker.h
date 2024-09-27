@@ -108,6 +108,16 @@ public:
     /**
      * @brief Attempt to brute force for all unsalted hashed password that're in the 10,000 most common
      *      password.
+     * @details Task 2 Code. This function will also write an ouput file to output/task2.csv
+     * @param path
+     *      The relative path to the file of password we're reading from.
+     *
+     */
+    void common_password_bf(const string &path);
+
+    /**
+     * @brief Attempt to use a rainbow table for all unsalted hashed password that're in the 10,000 most common
+     *      password.
      * @details Task 3 Code. This function will also write an output file to  output/task3.csv
      *
      * @param path

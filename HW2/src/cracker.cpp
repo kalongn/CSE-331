@@ -122,6 +122,44 @@ void PasswordCracker::brute_force(const string &path) {
     output_file.close();
 }
 
+void PasswordCracker::common_password_bf(const string &path) {
+    auto start_time = chrono::high_resolution_clock::now();
+    if (read_csv_file(path)) {
+        return;
+    }
+    if (read_common_password_file()) {
+        return;
+    }
+
+    output_file.open("output/task2.csv");
+    if (!output_file.is_open()) {
+        cerr << "Error opening output file" << endl;
+        return;
+    }
+
+    int success = 0;
+    for (auto line : data) {
+        string hashed_password = line.at(1);
+        bool found = false;
+        for (auto common : common_password) {
+            if (compute_MD5(common) == hashed_password) {
+                output_file << line.at(0).c_str() << ' ' << common.c_str() << '\n';
+                ++success;
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            output_file << "FAILED\n";
+        }
+    }
+    auto current_time = chrono::high_resolution_clock::now();
+    output_file << "TOTALTIME [" << chrono::duration_cast<chrono::seconds>(current_time - start_time).count() << "]\n";
+    output_file << "SUCCESSRATE [" << setprecision(2) << fixed << (double)success / data.size() * 100 << "%]" << endl;
+    hashed_to_password.clear();
+    output_file.close();
+}
+
 void PasswordCracker::common_password_rbtb(const string &path) {
     auto start_time = chrono::high_resolution_clock::now();
     if (read_csv_file(path)) {
