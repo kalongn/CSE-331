@@ -6,5 +6,7 @@ int main(int argc, char *argv[]) {
     (void)argv;
     PasswordCracker hehe;
     hehe.brute_force("./input/task1.csv");
+    // hehe.common_password_rbtb("./input/task3.csv");
+
     return 0;
 }

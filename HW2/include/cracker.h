@@ -26,9 +26,12 @@ private:
 
     ifstream input_file;
     ofstream output_file;
-    vector<vector<string>> data;
 
-    unordered_map<string, string> hashed_to_password;
+    vector<vector<string>> data; // stored the stuff read from input csv file to here
+
+    vector<string> common_password; // stored all the common password from csv file in rsrc
+
+    unordered_map<string, string> hashed_to_password; // essentially the rainbow table
     std::mutex mutex;
 
     /**
@@ -54,24 +57,37 @@ private:
     int read_csv_file(const string &path);
 
     /**
+     * @brief Read the rsrc common_passwords.csv file.
+     *
+     * @details
+     *      Assume file under rsrc/common_passwords.csv exist.
+     *
+     * @return int
+     *      0 == execute successfully, 1 == file cannot open.
+     */
+    int read_common_password_file();
+
+    /**
      * @brief Generate string up to certain length with all combination.
      * @details This is a recursive methods.
      *
      * @param current
      *      the current String of where it is, to start the recurions use "" as input.
+     * @param storage
+     *      The vector you want to stored all the generation possible.
      */
-    void generate_string_bf(string current);
+    void generate_string(string current, vector<string> &storage);
 
     /**
-     * @brief This is a thread function which allow us to divided the entire thing into segment such that we get
-     *      faster time computing all MD5 hash by bruteforce.
+     * @brief This is a thread function which allow us to divide all the 10,000 common password into smaller chunk for
+     *      faster time computing all the MD5 hash by bruteforce.
      *
      * @param begin
-     *      the index of the VALID_ARGS we want to start with.
+     *      the index of the common_password we want to start with.
      * @param end
-     *      the index of the VALID_ARGS we want to stop at.
+     *      the index of the common_password we want to stop at.
      */
-    void worker_task_bf(int begin, int end);
+    void worker_task_cp_rbtb(int begin, int end);
 
 public:
     /**
@@ -81,13 +97,23 @@ public:
     PasswordCracker();
 
     /**
-     * @brief Attempt to brute for all unsalted hashed password with <= 4 letter in length.
-     * @details Task 1 Code. This function will also write an output file with ./output/task1.csv
+     * @brief Attempt to brute force for all unsalted hashed password with <= 4 letter in length.
+     * @details Task 1 Code. This function will also write an output file to output/task1.csv
      *
      * @param path
      *      The relative path to the file of password we are reading from.
      */
     void brute_force(const string &path);
+
+    /**
+     * @brief Attempt to brute force for all unsalted hashed password that're in the 10,000 most common
+     *      password.
+     * @details Task 3 Code. This function will also write an output file to  output/task3.csv
+     *
+     * @param path
+     *      The relative path to the file of password we're reading from.
+     */
+    void common_password_rbtb(const string &path);
 
 };
 

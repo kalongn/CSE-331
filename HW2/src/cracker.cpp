@@ -35,7 +35,6 @@ int PasswordCracker::read_csv_file(const string &path) {
         return 1;
     }
     string line;
-
     while (getline(input_file, line)) {
         vector<std::string> row;
         stringstream ss(line);
@@ -51,41 +50,91 @@ int PasswordCracker::read_csv_file(const string &path) {
     return 0;
 }
 
-void PasswordCracker::generate_string_bf(string current) {
+int PasswordCracker::read_common_password_file() {
+    input_file.open("./rsrc/common_passwords.csv");
+    if (!input_file.is_open()) {
+        cerr << "Error opening input file" << endl;
+        return 1;
+    }
+    string line;
+    while (getline(input_file, line)) {
+        line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+        common_password.push_back(line);
+    }
+    input_file.close();
+    return 0;
+}
+
+void PasswordCracker::generate_string(string current, vector<string> &storage) {
     if (current.length() > 0) {
-        string hashed = compute_MD5(current);
-        {
-            unique_lock<std::mutex> lock(mutex);
-            hashed_to_password[hashed] = current;
-        }
+        storage.push_back(current);
     }
     if (current.length() == MAX_BRUTE_LENGTH) {
         return;
     }
     for (char c : VALID_CHARS) {
-        generate_string_bf(current + c);
+        generate_string(current + c, storage);
     }
 }
 
-void PasswordCracker::worker_task_bf(int begin, int end) {
+void PasswordCracker::worker_task_cp_rbtb(int begin, int end) {
     for (int i = begin; i < end; ++i) {
-        generate_string_bf(string(1, VALID_CHARS[i]));
+        string hashed = compute_MD5(common_password.at(i));
+        {
+            unique_lock<std::mutex> lock(mutex);
+            hashed_to_password[hashed] = common_password.at(i);
+        }
     }
 }
 
 void PasswordCracker::brute_force(const string &path) {
+    auto start_time = chrono::high_resolution_clock::now();
     if (read_csv_file(path)) {
         return;
     }
+    output_file.open("output/task1.csv");
+    if (!output_file.is_open()) {
+        cerr << "Error opening output file" << endl;
+        return;
+    }
+    vector<string> all_4_chars;
+    generate_string("", all_4_chars);
 
+    int success = 0;
+    for (auto line : data) {
+        string hashed_password = line.at(1);
+        bool found = false;
+        for (auto str : all_4_chars) {
+            if (compute_MD5(str) == hashed_password) {
+                output_file << line.at(0).c_str() << ' ' << str.c_str() << '\n';
+                ++success;
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            output_file << "FAILED\n";
+        }
+    }
+    auto current_time = chrono::high_resolution_clock::now();
+    output_file << "TOTALTIME [" << chrono::duration_cast<chrono::seconds>(current_time - start_time).count() << "]\n";
+    output_file << "SUCCESSRATE [" << setprecision(2) << fixed << (double)success / data.size() * 100 << "%]" << endl;
+    output_file.close();
+}
+
+void PasswordCracker::common_password_rbtb(const string &path) {
     auto start_time = chrono::high_resolution_clock::now();
-
+    if (read_csv_file(path)) {
+        return;
+    }
+    if (read_common_password_file()) {
+        return;
+    }
     vector<thread> threads;
-
-    threads.emplace_back(bind(&PasswordCracker::worker_task_bf, this, 0, 16));
-    threads.emplace_back(bind(&PasswordCracker::worker_task_bf, this, 16, 32));
-    threads.emplace_back(bind(&PasswordCracker::worker_task_bf, this, 32, 48));
-    threads.emplace_back(bind(&PasswordCracker::worker_task_bf, this, 48, VALID_CHARS_LENGTH));
+    threads.emplace_back(bind(&PasswordCracker::worker_task_cp_rbtb, this, 0, 2500));
+    threads.emplace_back(bind(&PasswordCracker::worker_task_cp_rbtb, this, 2500, 5000));
+    threads.emplace_back(bind(&PasswordCracker::worker_task_cp_rbtb, this, 5000, 7500));
+    threads.emplace_back(bind(&PasswordCracker::worker_task_cp_rbtb, this, 7500, 10000));
 
     for (auto &t : threads) {
         if (t.joinable()) {
@@ -93,7 +142,7 @@ void PasswordCracker::brute_force(const string &path) {
         }
     }
 
-    output_file.open("output/task1.csv");
+    output_file.open("output/task3.csv");
     if (!output_file.is_open()) {
         cerr << "Error opening output file" << endl;
         return;
@@ -112,5 +161,6 @@ void PasswordCracker::brute_force(const string &path) {
     auto current_time = chrono::high_resolution_clock::now();
     output_file << "TOTALTIME [" << chrono::duration_cast<chrono::seconds>(current_time - start_time).count() << "]\n";
     output_file << "SUCCESSRATE [" << setprecision(2) << fixed << (double)success / data.size() * 100 << "%]" << endl;
+    hashed_to_password.clear();
     output_file.close();
 }
