@@ -65,15 +65,15 @@ int PasswordCracker::read_common_password_file() {
     return 0;
 }
 
-void PasswordCracker::generate_string(const string &current, vector<string> &storage) {
+void PasswordCracker::generate_string(const string &current, const string &string_set, vector<string> &storage) {
     if (current.length() > 0) {
         storage.push_back(current);
     }
     if (current.length() == MAX_BRUTE_LENGTH) {
         return;
     }
-    for (char c : VALID_CHARS) {
-        generate_string(current + c, storage);
+    for (char c : string_set) {
+        generate_string(current + c, string_set, storage);
     }
 }
 
@@ -116,8 +116,8 @@ void PasswordCracker::brute_force(const string &path) {
         return;
     }
     vector<string> all_4_chars;
-    generate_string("", all_4_chars);
-
+    generate_string("", VALID_CHARS, all_4_chars);
+    
     int success = 0;
     for (auto line : data) {
         string hashed_password = line.at(1);

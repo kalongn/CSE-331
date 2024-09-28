@@ -74,10 +74,12 @@ private:
      *
      * @param current
      *      the current String of where it is, to start the recurions use "" as input.
+     * @param string_set
+     *      the string set of character you want to use.
      * @param storage
      *      The vector you want to stored all the generation possible.
      */
-    void generate_string(const string &current, vector<string> &storage);
+    void generate_string(const string &current, const string &string_set, vector<string> &storage);
 
     /**
      * @brief This is a thread function which allow us to divide all the 10,000 common password into smaller chunk for
