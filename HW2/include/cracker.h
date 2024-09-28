@@ -4,9 +4,11 @@
 
 #include <string>
 #include <utility>
+#include <algorithm>
 #include <vector>
 #include <unordered_set>
 #include <map>
+#include <unordered_map>
 #include <mutex>
 #include <thread>
 #include <chrono>
@@ -23,6 +25,7 @@ private:
     const static int SALT_LENGTH = 4;
     const static int MAX_BRUTE_LENGTH = 4;
     const string VALID_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const string VALID_NUM_CHARS = "0123456789";
     const int VALID_CHARS_LENGTH = VALID_CHARS.length();
 
     ifstream input_file;
@@ -81,6 +84,10 @@ private:
      */
     void generate_string(const string &current, const string &string_set, vector<string> &storage);
 
+    void generate_uppercase(const string &original_string, string current_string, size_t index, unordered_set<string> &storage);
+
+    void generate_swap(const string &original_string, unordered_set<string> &storage);
+
     /**
      * @brief This is a thread function which allow us to divide all the 10,000 common password into smaller chunk for
      *      faster time computing all the MD5 hash by bruteforce.
@@ -102,7 +109,7 @@ private:
     void obtain_salt(unordered_set<string> &storage);
 
     /**
-     * @brief  This is a thread function which allow us to divide all the 10,000 common password into smaller chunk for
+     * @brief This is a thread function which allow us to divide all the 10,000 common password into smaller chunk for
      *      faster time computing all the MD5 hash.
      *
      * @param begin
@@ -159,6 +166,8 @@ public:
      *      The relative path to the file of password we're reading from.
      */
     void common_password_salt_rbtb(const string &path);
+
+    void common_password_salt_transform(const string &path);
 
 };
 

@@ -77,6 +77,52 @@ void PasswordCracker::generate_string(const string &current, const string &strin
     }
 }
 
+void PasswordCracker::generate_uppercase(const string &original_string, string current_string, size_t index, unordered_set<string> &storage) {
+    if (index == original_string.size()) {
+        storage.insert(current_string);
+        return;
+    }
+    current_string.push_back(tolower(original_string[index]));
+    generate_uppercase(original_string, current_string, index + 1, storage);
+
+    if (isalpha(original_string[index])) {
+        current_string.back() = toupper(original_string[index]);
+        generate_uppercase(original_string, current_string, index + 1, storage);
+    }
+}
+
+void PasswordCracker::generate_swap(const string &original_string, unordered_set<string> &storage) {
+    string dup = original_string;
+    replace(dup.begin(), dup.end(), 'e', '3');
+    storage.insert(dup);
+    dup = original_string;
+    replace(dup.begin(), dup.end(), 'o', '0');
+    storage.insert(dup);
+    dup = original_string;
+    replace(dup.begin(), dup.end(), 't', '7');
+    storage.insert(dup);
+
+    dup = original_string;
+    replace(dup.begin(), dup.end(), 'e', '3');
+    replace(dup.begin(), dup.end(), 'o', '0');
+    storage.insert(dup);
+    dup = original_string;
+    replace(dup.begin(), dup.end(), 'e', '3');
+    replace(dup.begin(), dup.end(), 't', '7');
+    storage.insert(dup);
+    dup = original_string;
+    replace(dup.begin(), dup.end(), 't', '7');
+    replace(dup.begin(), dup.end(), 'o', '0');
+    storage.insert(dup);
+
+    dup = original_string;
+    replace(dup.begin(), dup.end(), 'e', '3');
+    replace(dup.begin(), dup.end(), 'o', '0');
+    replace(dup.begin(), dup.end(), 't', '7');
+    storage.insert(dup);
+}
+
+
 void PasswordCracker::worker_task_cp_rbtb(const int &begin, const int &end) {
     for (int i = begin; i < end; ++i) {
         string hashed = compute_MD5(common_password.at(i));
@@ -117,7 +163,7 @@ void PasswordCracker::brute_force(const string &path) {
     }
     vector<string> all_4_chars;
     generate_string("", VALID_CHARS, all_4_chars);
-    
+
     int success = 0;
     for (auto line : data) {
         string hashed_password = line.at(1);
@@ -249,6 +295,51 @@ void PasswordCracker::common_password_salt_rbtb(const string &path) {
         cerr << "Error opening output file" << endl;
         return;
     }
+
+    int success = 0;
+    for (auto line : data) {
+        string hashed_password = line.at(1);
+        if (hashed_to_password.count(hashed_password)) {
+            output_file << line.at(0).c_str() << ',' << hashed_to_password[hashed_password].c_str() << '\n';
+            ++success;
+        } else {
+            output_file << "FAILED\n";
+        }
+    }
+    auto current_time = chrono::high_resolution_clock::now();
+    output_file << "TOTALTIME [" << chrono::duration_cast<chrono::seconds>(current_time - start_time).count() << "]\n";
+    output_file << "SUCCESSRATE [" << setprecision(2) << fixed << (double)success / data.size() * 100 << "%]" << endl;
+    hashed_to_password.clear();
+    output_file.close();
+}
+
+void PasswordCracker::common_password_salt_transform(const string &path) {
+    auto start_time = chrono::high_resolution_clock::now();
+    if (read_csv_file(path)) {
+        return;
+    }
+    if (read_common_password_file()) {
+        return;
+    }
+    unordered_set<string> all_salts;
+    obtain_salt(all_salts);
+    vector<string> all_4_digits;
+    generate_string("", VALID_NUM_CHARS, all_4_digits);
+    all_4_digits.push_back("");
+
+    vector<thread> threads;
+    threads.emplace_back(bind(&PasswordCracker::worker_task_salt_cp_rbtb, this, 0, 2500, all_salts));
+    threads.emplace_back(bind(&PasswordCracker::worker_task_salt_cp_rbtb, this, 2500, 5000, all_salts));
+    threads.emplace_back(bind(&PasswordCracker::worker_task_salt_cp_rbtb, this, 5000, 7500, all_salts));
+    threads.emplace_back(bind(&PasswordCracker::worker_task_salt_cp_rbtb, this, 7500, 10000, all_salts));
+
+    for (auto &t : threads) {
+        if (t.joinable()) {
+            t.join();
+        }
+    }
+
+    output_file.open("output/task5.csv");
     if (!output_file.is_open()) {
         cerr << "Error opening output file" << endl;
         return;
@@ -257,12 +348,37 @@ void PasswordCracker::common_password_salt_rbtb(const string &path) {
     int success = 0;
     for (auto line : data) {
         string hashed_password = line.at(1);
+
+        // if exist in precomputed, use precomputed
         if (hashed_to_password.count(hashed_password)) {
-            output_file << line.at(0).c_str() << ' ' << hashed_to_password[hashed_password].c_str() << '\n';
+            output_file << line.at(0).c_str() << ',' << hashed_to_password[hashed_password].c_str() << '\n';
             ++success;
-        } else {
-            output_file << "FAILED\n";
+            continue;
         }
+
+        cout << hashed_password << " not found in rainbow table, need calculation." << endl;
+        for (int i = 0; i < 10000; ++i) {
+            cout << "Checking all transformation of \"" << common_password.at(i).c_str() << "\"" << endl;
+            unordered_set<string> transformed_set;
+            generate_uppercase(common_password.at(i), "", 0, transformed_set);
+            for (auto str : transformed_set) {
+                generate_swap(str, transformed_set);
+            }
+            for (string str : transformed_set) {
+                for (auto digits : all_4_digits) {
+                    for (auto salt : all_salts) {
+                        string hashed = compute_MD5(str + digits + salt);
+                        if (hashed == hashed_password) {
+                            output_file << line.at(0).c_str() << ',' << (str + digits).c_str() << '\n';
+                            ++success;
+                            goto password_found;
+                        }
+                    }
+                }
+            }
+        }
+        output_file << "FAILED\n";
+    password_found:;
     }
     auto current_time = chrono::high_resolution_clock::now();
     output_file << "TOTALTIME [" << chrono::duration_cast<chrono::seconds>(current_time - start_time).count() << "]\n";
