@@ -5,6 +5,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <unordered_set>
 #include <map>
 #include <mutex>
 #include <thread>
@@ -76,7 +77,7 @@ private:
      * @param storage
      *      The vector you want to stored all the generation possible.
      */
-    void generate_string(string current, vector<string> &storage);
+    void generate_string(const string &current, vector<string> &storage);
 
     /**
      * @brief This is a thread function which allow us to divide all the 10,000 common password into smaller chunk for
@@ -87,7 +88,29 @@ private:
      * @param end
      *      the index of the common_password we want to stop at.
      */
-    void worker_task_cp_rbtb(int begin, int end);
+    void worker_task_cp_rbtb(const int &begin, const int &end);
+
+    /**
+     * @brief Read from data vector to determine all the unique salt present in the file
+     * @details a short cut instead of generating the large rainbow table if we know what salts are present
+     *
+     * @param storage
+     *      The unordered_set you want to stored all the generation possible.
+     */
+    void obtain_salt(unordered_set<string> &storage);
+
+    /**
+     * @brief  This is a thread function which allow us to divide all the 10,000 common password into smaller chunk for
+     *      faster time computing all the MD5 hash.
+     *
+     * @param begin
+     *      the index of the common_password we want to start with.
+     * @param end
+     *      the index of the common_password we want to stop at.
+     * @param all_salts
+     *      All the salts we've seen from input.
+     */
+    void worker_task_salt_cp_rbtb(const int &begin, const int &end, const unordered_set<string> &all_salts);
 
 public:
     /**
@@ -124,6 +147,16 @@ public:
      *      The relative path to the file of password we're reading from.
      */
     void common_password_rbtb(const string &path);
+
+    /**
+     * @brief Attempt to use a rainbow table for detected salt hashed password that're in the 10,000 most common
+     *      password.
+     * @details Task 4 Code. This function will also write an output file to output/task4.csv
+     *
+     * @param path
+     *      The relative path to the file of password we're reading from.
+     */
+    void common_password_salt_rbtb(const string &path);
 
 };
 

@@ -65,7 +65,7 @@ int PasswordCracker::read_common_password_file() {
     return 0;
 }
 
-void PasswordCracker::generate_string(string current, vector<string> &storage) {
+void PasswordCracker::generate_string(const string &current, vector<string> &storage) {
     if (current.length() > 0) {
         storage.push_back(current);
     }
@@ -77,12 +77,30 @@ void PasswordCracker::generate_string(string current, vector<string> &storage) {
     }
 }
 
-void PasswordCracker::worker_task_cp_rbtb(int begin, int end) {
+void PasswordCracker::worker_task_cp_rbtb(const int &begin, const int &end) {
     for (int i = begin; i < end; ++i) {
         string hashed = compute_MD5(common_password.at(i));
         {
             unique_lock<std::mutex> lock(mutex);
             hashed_to_password[hashed] = common_password.at(i);
+        }
+    }
+}
+
+void PasswordCracker::obtain_salt(unordered_set<string> &storage) {
+    for (auto line : data) {
+        storage.insert(line.at(2));
+    }
+}
+
+void PasswordCracker::worker_task_salt_cp_rbtb(const int &begin, const int &end, const unordered_set<string> &all_salts) {
+    for (int i = begin; i < end; ++i) {
+        for (auto salt : all_salts) {
+            string hashed = compute_MD5(common_password.at(i) + salt);
+            {
+                unique_lock<std::mutex> lock(mutex);
+                hashed_to_password[hashed] = common_password.at(i);
+            }
         }
     }
 }
@@ -106,7 +124,7 @@ void PasswordCracker::brute_force(const string &path) {
         bool found = false;
         for (auto str : all_4_chars) {
             if (compute_MD5(str) == hashed_password) {
-                output_file << line.at(0).c_str() << ' ' << str.c_str() << '\n';
+                output_file << line.at(0).c_str() << ',' << str.c_str() << '\n';
                 ++success;
                 found = true;
                 break;
@@ -143,7 +161,7 @@ void PasswordCracker::common_password_bf(const string &path) {
         bool found = false;
         for (auto common : common_password) {
             if (compute_MD5(common) == hashed_password) {
-                output_file << line.at(0).c_str() << ' ' << common.c_str() << '\n';
+                output_file << line.at(0).c_str() << ',' << common.c_str() << '\n';
                 ++success;
                 found = true;
                 break;
@@ -181,6 +199,56 @@ void PasswordCracker::common_password_rbtb(const string &path) {
     }
 
     output_file.open("output/task3.csv");
+    if (!output_file.is_open()) {
+        cerr << "Error opening output file" << endl;
+        return;
+    }
+
+    int success = 0;
+    for (auto line : data) {
+        string hashed_password = line.at(1);
+        if (hashed_to_password.count(hashed_password)) {
+            output_file << line.at(0).c_str() << ',' << hashed_to_password[hashed_password].c_str() << '\n';
+            ++success;
+        } else {
+            output_file << "FAILED\n";
+        }
+    }
+    auto current_time = chrono::high_resolution_clock::now();
+    output_file << "TOTALTIME [" << chrono::duration_cast<chrono::seconds>(current_time - start_time).count() << "]\n";
+    output_file << "SUCCESSRATE [" << setprecision(2) << fixed << (double)success / data.size() * 100 << "%]" << endl;
+    hashed_to_password.clear();
+    output_file.close();
+}
+
+void PasswordCracker::common_password_salt_rbtb(const string &path) {
+    auto start_time = chrono::high_resolution_clock::now();
+    if (read_csv_file(path)) {
+        return;
+    }
+    if (read_common_password_file()) {
+        return;
+    }
+    unordered_set<string> all_salts;
+    obtain_salt(all_salts);
+
+    vector<thread> threads;
+    threads.emplace_back(bind(&PasswordCracker::worker_task_salt_cp_rbtb, this, 0, 2500, all_salts));
+    threads.emplace_back(bind(&PasswordCracker::worker_task_salt_cp_rbtb, this, 2500, 5000, all_salts));
+    threads.emplace_back(bind(&PasswordCracker::worker_task_salt_cp_rbtb, this, 5000, 7500, all_salts));
+    threads.emplace_back(bind(&PasswordCracker::worker_task_salt_cp_rbtb, this, 7500, 10000, all_salts));
+
+    for (auto &t : threads) {
+        if (t.joinable()) {
+            t.join();
+        }
+    }
+
+    output_file.open("output/task4.csv");
+    if (!output_file.is_open()) {
+        cerr << "Error opening output file" << endl;
+        return;
+    }
     if (!output_file.is_open()) {
         cerr << "Error opening output file" << endl;
         return;
