@@ -84,8 +84,32 @@ private:
      */
     void generate_string(const string &current, const string &string_set, vector<string> &storage);
 
+    /**
+     * @brief Generate all the variation to uppercase a string.
+     *
+     * @param original_string
+     *      The original string (the input original string).
+     * @param current_string
+     *      This is for the recursive call to know the previous call string.
+     * @param index
+     *      This is also for recursive call to indicate which index of the original string we're at.
+     * @param storage
+     *      The set is a storage to put all the results in.
+     */
     void generate_uppercase(const string &original_string, string current_string, size_t index, unordered_set<string> &storage);
 
+    /**
+     * @brief Generate all the character swap possible for a string.
+     * @details
+     *      e -> 3,
+     *      o -> 0,
+     *      t -> 7
+     *
+     * @param original_string
+     *      The original string (the input original string).
+     * @param storage
+     *      The set is a storage to put all the results in.
+     */
     void generate_swap(const string &original_string, unordered_set<string> &storage);
 
     /**
@@ -167,6 +191,13 @@ public:
      */
     void common_password_salt_rbtb(const string &path);
 
+    /**
+     * @brief Attempt to crack a salted data base with transformation applied to the password 10,000 list.
+     * @details Task 5 code. This function will also write an output file to output/task5.csv
+     *
+     * @param path
+     *      The relative path to the file of password we're reading from.
+     */
     void common_password_salt_transform(const string &path);
 
 };
