@@ -220,9 +220,9 @@ void PasswordCracker::brute_force(const string &path) {
                 all_hashes[i] = str;
                 ++success;
             }
-        }
-        if ((size_t)success == all_hashes.size()) {
-            break;
+            if ((size_t)success == all_hashes.size()) {
+                break;
+            }
         }
     }
 
@@ -254,22 +254,36 @@ void PasswordCracker::common_password_bf(const string &path) {
         return;
     }
 
+    vector<string> all_hashes(data.size());
+    unordered_map<string, vector<int>> index_map(data.size());
+
+    for (size_t i = 0; i < data.size(); ++i) {
+        all_hashes.push_back(data[i][1]);
+        index_map[data[i][1]].push_back(i);
+    }
+
     int success = 0;
-    for (auto line : data) {
-        string hashed_password = line.at(1);
-        bool found = false;
-        for (auto common : common_password) {
-            if (compute_MD5(common) == hashed_password) {
-                output_file << line.at(0).c_str() << ',' << common.c_str() << '\n';
+    for (auto common : common_password) {
+        string hash = compute_MD5(common);
+        if (index_map.count(hash)) {
+            for (auto i : index_map[hash]) {
+                all_hashes[i] = common;
                 ++success;
-                found = true;
+            }
+            if ((size_t)success == all_hashes.size()) {
                 break;
             }
         }
-        if (!found) {
+    }
+
+    for (size_t i = 0; i < data.size(); ++i) {
+        if (all_hashes[i] == "") {
             output_file << "FAILED\n";
+        } else {
+            output_file << data[i][0].c_str() << ',' << all_hashes[i].c_str() << '\n';
         }
     }
+    
     auto current_time = chrono::high_resolution_clock::now();
     output_file << "TOTALTIME [" << chrono::duration_cast<chrono::seconds>(current_time - start_time).count() << "]\n";
     output_file << "SUCCESSRATE [" << setprecision(2) << fixed << (double)success / data.size() * 100 << "%]" << endl;
