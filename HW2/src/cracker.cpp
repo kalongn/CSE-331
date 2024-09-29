@@ -158,7 +158,7 @@ void PasswordCracker::worker_task_salt_transform(const int &begin, const int &en
     atomic<bool> &should_done
 ) {
     for (int i = begin; i < end && !should_done.load(); ++i) {
-        cout << this_thread::get_id() <<  ", Checking all transformation of \"" << common_password.at(i) << "\"" << endl;
+        cout << this_thread::get_id() << ", Checking all transformation of \"" << common_password.at(i) << "\"" << endl;
         unordered_set<string> transformed_set;
         generate_uppercase(common_password.at(i), "", 0, transformed_set);
         for (auto str : transformed_set) {
@@ -205,20 +205,33 @@ void PasswordCracker::brute_force(const string &path) {
     vector<string> all_4_chars;
     generate_string("", VALID_CHARS, all_4_chars);
 
+    vector<string> all_hashes(data.size());
+    unordered_map<string, vector<int>> index_map(data.size());
+
+    for (size_t i = 0; i < data.size(); ++i) {
+        all_hashes.push_back(data[i][1]);
+        index_map[data[i][1]].push_back(i);
+    }
+
     int success = 0;
-    for (auto line : data) {
-        string hashed_password = line.at(1);
-        bool found = false;
-        for (auto str : all_4_chars) {
-            if (compute_MD5(str) == hashed_password) {
-                output_file << line.at(0).c_str() << ',' << str.c_str() << '\n';
+    for (auto str : all_4_chars) {
+        string hash = compute_MD5(str);
+        if (index_map.count(hash)) {
+            for (auto i : index_map[hash]) {
+                all_hashes[i] = str;
                 ++success;
-                found = true;
-                break;
             }
         }
-        if (!found) {
+        if ((size_t)success == all_hashes.size()) {
+            break;
+        }
+    }
+
+    for (size_t i = 0; i < data.size(); ++i) {
+        if (all_hashes[i] == "") {
             output_file << "FAILED\n";
+        } else {
+            output_file << data[i][0].c_str() << ',' << all_hashes[i].c_str() << '\n';
         }
     }
     auto current_time = chrono::high_resolution_clock::now();
