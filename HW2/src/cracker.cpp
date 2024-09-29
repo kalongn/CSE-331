@@ -151,44 +151,46 @@ void PasswordCracker::worker_task_salt_cp_rbtb(const int &begin, const int &end,
 }
 
 void PasswordCracker::worker_task_salt_transform(const int &begin, const int &end,
-    const string &target_name,
-    const string &target,
     const unordered_set<string> &all_salts,
     const vector<string> &all_4_digits,
-    atomic<bool> &should_done
+    const unordered_map<string, vector<int>> &target_index_map,
+    vector<string> &target_hashes,
+    atomic_int &success
 ) {
-    for (int i = begin; i < end && !should_done.load(); ++i) {
-        cout << this_thread::get_id() << ", Checking all transformation of \"" << common_password.at(i) << "\"" << endl;
+    for (int i = begin; i < end; ++i) {
+        {
+            unique_lock<std::mutex> lock(print_mutex);
+            cout << this_thread::get_id() << ", Checking all transformation of \"" << common_password.at(i) << "\"" << endl;
+            cout.flush();
+        }
         unordered_set<string> transformed_set;
         generate_uppercase(common_password.at(i), "", 0, transformed_set);
         for (auto str : transformed_set) {
-            if (should_done.load()) {
-                break;
-            }
             generate_swap(str, transformed_set);
         }
-
         for (auto str : transformed_set) {
-            if (should_done.load()) {
-                break;
-            }
             for (auto digits : all_4_digits) {
-                if (should_done.load()) {
-                    break;
-                }
                 for (auto salt : all_salts) {
-                    if (should_done.load()) {
-                        break;
+                    string hash = compute_MD5(str + digits + salt);
+                    if (target_index_map.count(hash)) {
+                        {
+                            unique_lock<std::mutex> lock(mutex);
+                            for (auto i : target_index_map.at(hash)) {
+                                if (target_hashes[i] == "") {
+                                    target_hashes[i] = str + digits;
+                                    ++success;
+                                }
+                            }
+                        }
                     }
-                    string hashed = compute_MD5(str + digits + salt);
-                    if (hashed == target) {
-                        output_file << target_name.c_str() << ',' << (str + digits).c_str() << '\n';
-                        should_done.store(true);
+                    if ((size_t)success == target_hashes.size()) {
+                        goto end;
                     }
                 }
             }
         }
     }
+end:;
 }
 
 void PasswordCracker::brute_force(const string &path) {
@@ -208,7 +210,6 @@ void PasswordCracker::brute_force(const string &path) {
     unordered_map<string, vector<int>> index_map(data.size());
 
     for (size_t i = 0; i < data.size(); ++i) {
-        all_hashes.push_back(data[i][1]);
         index_map[data[i][1]].push_back(i);
     }
 
@@ -258,7 +259,6 @@ void PasswordCracker::common_password_bf(const string &path) {
     unordered_map<string, vector<int>> index_map(data.size());
 
     for (size_t i = 0; i < data.size(); ++i) {
-        all_hashes.push_back(data[i][1]);
         index_map[data[i][1]].push_back(i);
     }
 
@@ -283,7 +283,7 @@ void PasswordCracker::common_password_bf(const string &path) {
             output_file << data[i][0].c_str() << ',' << all_hashes[i].c_str() << '\n';
         }
     }
-    
+
     auto current_time = chrono::high_resolution_clock::now();
     output_file << "TOTALTIME [" << chrono::duration_cast<chrono::seconds>(current_time - start_time).count() << "]\n";
     output_file << "SUCCESSRATE [" << setprecision(2) << fixed << (double)success / data.size() * 100 << "%]" << endl;
@@ -413,73 +413,87 @@ void PasswordCracker::common_password_salt_transform(const string &path) {
         return;
     }
 
-    int success = 0;
-    for (auto line : data) {
-        string hashed_password = line.at(1);
+    vector<string> all_hashes(data.size());
+    unordered_map<string, vector<int>> index_map(data.size());
 
-        // if exist in precomputed, use precomputed
-        if (hashed_to_password.count(hashed_password)) {
-            output_file << line.at(0).c_str() << ',' << hashed_to_password[hashed_password].c_str() << '\n';
-            ++success;
-            continue;
-        }
+    for (size_t i = 0; i < data.size(); ++i) {
+        index_map[data[i][1]].push_back(i);
+    }
 
-        cout << hashed_password << " not found in rainbow table, need calculation." << endl;
-        atomic<bool> should_done(false);
-        threads.emplace_back(bind(
-            &PasswordCracker::worker_task_salt_transform,
-            this,
-            0,
-            2500,
-            line.at(0),
-            hashed_password,
-            all_salts,
-            all_4_digits,
-            ref(should_done)
-        ));
-        threads.emplace_back(bind(
-            &PasswordCracker::worker_task_salt_transform,
-            this,
-            2500,
-            5000,
-            line.at(0),
-            hashed_password,
-            all_salts,
-            all_4_digits,
-            ref(should_done)
-        ));
-        threads.emplace_back(bind(
-            &PasswordCracker::worker_task_salt_transform,
-            this,
-            5000,
-            7500,
-            line.at(0),
-            hashed_password,
-            all_salts,
-            all_4_digits,
-            ref(should_done)
-        ));
-        threads.emplace_back(bind(
-            &PasswordCracker::worker_task_salt_transform,
-            this,
-            7500,
-            10000,
-            line.at(0),
-            hashed_password,
-            all_salts,
-            all_4_digits,
-            ref(should_done)
-        ));
-        for (auto &t : threads) {
-            if (t.joinable()) {
-                t.join();
+    atomic<int> success(0);
+    for (auto hash_pass : hashed_to_password) {
+        string hash = hash_pass.first;
+        if (index_map.count(hash)) {
+            for (auto i : index_map[hash]) {
+                all_hashes[i] = hash_pass.second;
+                ++success;
+            }
+            if ((size_t)success == all_hashes.size()) {
+                goto output;
             }
         }
+    }
 
-        if (!should_done.load()) {
-            output_file << "FAILED\n";
+    threads.emplace_back(bind(
+        &PasswordCracker::worker_task_salt_transform,
+        this,
+        0,
+        2500,
+        all_salts,
+        all_4_digits,
+        index_map,
+        ref(all_hashes),
+        ref(success)
+    ));
+    threads.emplace_back(bind(
+        &PasswordCracker::worker_task_salt_transform,
+        this,
+        2500,
+        5000,
+        all_salts,
+        all_4_digits,
+        index_map,
+        ref(all_hashes),
+        ref(success)
+    ));
+    threads.emplace_back(bind(
+        &PasswordCracker::worker_task_salt_transform,
+        this,
+        5000,
+        7500,
+        all_salts,
+        all_4_digits,
+        index_map,
+        ref(all_hashes),
+        ref(success)
+    ));
+    threads.emplace_back(bind(
+        &PasswordCracker::worker_task_salt_transform,
+        this,
+        7500,
+        10000,
+        all_salts,
+        all_4_digits,
+        index_map,
+        ref(all_hashes),
+        ref(success)
+    ));
+
+    for (auto &t : threads) {
+        if (t.joinable()) {
+            t.join();
         }
     }
+
+output:;
+    for (size_t i = 0; i < data.size(); ++i) {
+        if (all_hashes[i] == "") {
+            output_file << "FAILED\n";
+        } else {
+            output_file << data[i][0].c_str() << ',' << all_hashes[i].c_str() << '\n';
+        }
+    }
+
     auto current_time = chrono::high_resolution_clock::now();
     output_file << "TOTALTIME [" << chrono::duration_cast<chrono::seconds>(current_time - start_time).count() << "]\n";
     output_file << "SUCCESSRATE [" << setprecision(2) << fixed << (double)success / data.size() * 100 << "%]" << endl;

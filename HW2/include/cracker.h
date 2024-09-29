@@ -40,6 +40,7 @@ private:
 
     unordered_map<string, string> hashed_to_password; // essentially the rainbow table
     std::mutex mutex;
+    std::mutex print_mutex;
 
     /**
      * @brief Compute the MD5 hashes for for the input string, and return a string of the hash.
@@ -149,11 +150,11 @@ private:
     void worker_task_salt_cp_rbtb(const int &begin, const int &end, const unordered_set<string> &all_salts);
 
     void worker_task_salt_transform(const int &begin, const int &end,
-        const string &target_name,
-        const string &target,
         const unordered_set<string> &all_salts,
         const vector<string> &all_4_digits,
-        atomic<bool> &should_done
+        const unordered_map<string, vector<int>> &target_index_map,
+        vector<string> &target_hashes,
+        atomic_int &successes
     );
 
 
