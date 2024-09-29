@@ -191,7 +191,6 @@ void PasswordCracker::worker_task_salt_transform(const int &begin, const int &en
     }
 }
 
-
 void PasswordCracker::brute_force(const string &path) {
     auto start_time = chrono::high_resolution_clock::now();
     if (read_csv_file(path)) {
