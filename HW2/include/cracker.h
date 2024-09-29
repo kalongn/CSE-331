@@ -3,20 +3,23 @@
 #define CRACKER_H
 
 #include <string>
-#include <utility>
-#include <algorithm>
 #include <vector>
 #include <unordered_set>
 #include <map>
 #include <unordered_map>
-#include <mutex>
+
 #include <thread>
+#include <mutex>
+#include <atomic>
 #include <chrono>
+
 #include <iomanip>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 
+#include <utility>
+#include <algorithm>
 #include <openssl/evp.h>
 
 using namespace std;
@@ -144,6 +147,15 @@ private:
      *      All the salts we've seen from input.
      */
     void worker_task_salt_cp_rbtb(const int &begin, const int &end, const unordered_set<string> &all_salts);
+
+    void worker_task_salt_transform(const int &begin, const int &end,
+        const string &target_name,
+        const string &target,
+        const unordered_set<string> &all_salts,
+        const vector<string> &all_4_digits,
+        atomic<bool> &should_done
+    );
+
 
 public:
     /**
