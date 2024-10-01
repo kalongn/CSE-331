@@ -198,7 +198,7 @@ void PasswordCracker::brute_force(const string &path) {
     if (read_csv_file(path)) {
         return;
     }
-    output_file.open("output/task1.csv");
+    output_file.open("task1.csv");
     if (!output_file.is_open()) {
         cerr << "Error opening output file" << endl;
         return;
@@ -249,7 +249,7 @@ void PasswordCracker::common_password_bf(const string &path) {
         return;
     }
 
-    output_file.open("output/task2.csv");
+    output_file.open("task2.csv");
     if (!output_file.is_open()) {
         cerr << "Error opening output file" << endl;
         return;
@@ -311,7 +311,7 @@ void PasswordCracker::common_password_rbtb(const string &path) {
         }
     }
 
-    output_file.open("output/task3.csv");
+    output_file.open("task3.csv");
     if (!output_file.is_open()) {
         cerr << "Error opening output file" << endl;
         return;
@@ -357,7 +357,7 @@ void PasswordCracker::common_password_salt_rbtb(const string &path) {
         }
     }
 
-    output_file.open("output/task4.csv");
+    output_file.open("task4.csv");
     if (!output_file.is_open()) {
         cerr << "Error opening output file" << endl;
         return;
@@ -407,7 +407,7 @@ void PasswordCracker::common_password_salt_transform(const string &path) {
     }
     threads.clear();
 
-    output_file.open("output/task5.csv");
+    output_file.open("task5.csv");
     if (!output_file.is_open()) {
         cerr << "Error opening output file" << endl;
         return;

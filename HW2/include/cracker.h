@@ -167,7 +167,7 @@ public:
 
     /**
      * @brief Attempt to brute force for all unsalted hashed password with <= 4 letter in length.
-     * @details Task 1 Code. This function will also write an output file to output/task1.csv
+     * @details Task 1 Code. This function will also write an output file to task1.csv
      *
      * @param path
      *      The relative path to the file of password we are reading from.
@@ -177,7 +177,7 @@ public:
     /**
      * @brief Attempt to brute force for all unsalted hashed password that're in the 10,000 most common
      *      password.
-     * @details Task 2 Code. This function will also write an ouput file to output/task2.csv
+     * @details Task 2 Code. This function will also write an ouput file to task2.csv
      * @param path
      *      The relative path to the file of password we're reading from.
      *
@@ -187,7 +187,7 @@ public:
     /**
      * @brief Attempt to use a rainbow table for all unsalted hashed password that're in the 10,000 most common
      *      password.
-     * @details Task 3 Code. This function will also write an output file to  output/task3.csv
+     * @details Task 3 Code. This function will also write an output file to task3.csv
      *
      * @param path
      *      The relative path to the file of password we're reading from.
@@ -197,7 +197,7 @@ public:
     /**
      * @brief Attempt to use a rainbow table for detected salt hashed password that're in the 10,000 most common
      *      password.
-     * @details Task 4 Code. This function will also write an output file to output/task4.csv
+     * @details Task 4 Code. This function will also write an output file to task4.csv
      *
      * @param path
      *      The relative path to the file of password we're reading from.
@@ -206,7 +206,7 @@ public:
 
     /**
      * @brief Attempt to crack a salted data base with transformation applied to the password 10,000 list.
-     * @details Task 5 code. This function will also write an output file to output/task5.csv
+     * @details Task 5 code. This function will also write an output file to task5.csv
      *
      * @param path
      *      The relative path to the file of password we're reading from.
