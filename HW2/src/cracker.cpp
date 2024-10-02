@@ -58,7 +58,6 @@ int PasswordCracker::read_common_password_file() {
     }
     string line;
     while (getline(input_file, line)) {
-        line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
         common_password.push_back(line);
     }
     input_file.close();
