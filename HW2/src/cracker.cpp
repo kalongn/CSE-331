@@ -91,34 +91,31 @@ void PasswordCracker::generate_uppercase(const string &original_string, string c
 }
 
 void PasswordCracker::generate_swap(const string &original_string, unordered_set<string> &storage) {
+    // Lambda function to do the recursion as needs to update the uppercase now too, manual coding all ways
+    // like before will be too much works.
+    function<void(string &, int)> generate_combinations = [&](string &current_string, int index) {
+        if ((size_t)index == current_string.length()) {
+            storage.insert(current_string);
+            return;
+        }
+        // no sub
+        generate_combinations(current_string, index + 1);
+
+        char original_char = current_string[index];
+        if (original_char == 'e' || original_char == 'E') {
+            current_string[index] = '3';
+            generate_combinations(current_string, index + 1);
+        } else if (original_char == 'o' || original_char == 'O') {
+            current_string[index] = '0';
+            generate_combinations(current_string, index + 1);
+        } else if (original_char == 't' || original_char == 'T') {
+            current_string[index] = '7';
+            generate_combinations(current_string, index + 1);
+        }
+        current_string[index] = original_char;
+        };
     string dup = original_string;
-    replace(dup.begin(), dup.end(), 'e', '3');
-    storage.insert(dup);
-    dup = original_string;
-    replace(dup.begin(), dup.end(), 'o', '0');
-    storage.insert(dup);
-    dup = original_string;
-    replace(dup.begin(), dup.end(), 't', '7');
-    storage.insert(dup);
-
-    dup = original_string;
-    replace(dup.begin(), dup.end(), 'e', '3');
-    replace(dup.begin(), dup.end(), 'o', '0');
-    storage.insert(dup);
-    dup = original_string;
-    replace(dup.begin(), dup.end(), 'e', '3');
-    replace(dup.begin(), dup.end(), 't', '7');
-    storage.insert(dup);
-    dup = original_string;
-    replace(dup.begin(), dup.end(), 't', '7');
-    replace(dup.begin(), dup.end(), 'o', '0');
-    storage.insert(dup);
-
-    dup = original_string;
-    replace(dup.begin(), dup.end(), 'e', '3');
-    replace(dup.begin(), dup.end(), 'o', '0');
-    replace(dup.begin(), dup.end(), 't', '7');
-    storage.insert(dup);
+    generate_combinations(dup, 0);
 }
 
 void PasswordCracker::worker_task_cp_rbtb(const int &begin, const int &end) {
