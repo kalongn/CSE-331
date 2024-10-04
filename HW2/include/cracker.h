@@ -105,16 +105,21 @@ private:
     /**
      * @brief Generate all the character swap possible for a string.
      * @details
-     *      e -> 3,
-     *      o -> 0,
-     *      t -> 7
+     *      e/E -> 3,
+     *      o/O -> 0,
+     *      t/T -> 7
      *
      * @param original_string
      *      The original string (the input original string).
+     * @param current_string
+     *      This is for the recursive call to know the previous call string.
+     * @param index
+     *      This is also for recursive call to indicate which index of the original string we're at.
      * @param storage
      *      The set is a storage to put all the results in.
      */
-    void generate_swap(const string &original_string, unordered_set<string> &storage);
+    void generate_swap(const string &original_string, string current_string, size_t index, unordered_set<string> &storage);
+
 
     /**
      * @brief This is a thread function which allow us to divide all the 10,000 common password into smaller chunk for
@@ -154,7 +159,7 @@ private:
         const vector<string> &all_4_digits,
         const unordered_map<string, vector<int>> &target_index_map,
         vector<string> &target_hashes,
-        atomic_int &successes
+        int &successes
     );
 
 
