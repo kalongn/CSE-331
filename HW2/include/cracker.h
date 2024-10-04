@@ -159,7 +159,7 @@ private:
         const vector<string> &all_4_digits,
         const unordered_map<string, vector<int>> &target_index_map,
         vector<string> &target_hashes,
-        int &successes
+        atomic<int> &successes
     );
 
 

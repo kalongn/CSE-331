@@ -139,7 +139,7 @@ void PasswordCracker::worker_task_salt_transform(const int &begin, const int &en
     const vector<string> &all_4_digits,
     const unordered_map<string, vector<int>> &target_index_map,
     vector<string> &target_hashes,
-    int &success
+    atomic<int> &success
 ) {
     for (int i = begin; i < end; ++i) {
         auto start_time = chrono::high_resolution_clock::now();
@@ -149,13 +149,13 @@ void PasswordCracker::worker_task_salt_transform(const int &begin, const int &en
         for (auto str : upper_set) {
             generate_swap(str, "", 0, swap_upper_set);
         }
-        for (auto str : swap_upper_set) {
-            for (auto digits : all_4_digits) {
+        for (const auto &str : swap_upper_set) {
+            for (const auto &digits : all_4_digits) {
                 string temp_comp = str + digits;
-                for (auto salt : all_salts) {
+                for (const auto &salt : all_salts) {
                     string hash = compute_MD5(temp_comp + salt);
                     if (target_index_map.find(hash) != target_index_map.end()) {
-                        for (auto i : target_index_map.at(hash)) {
+                        for (const auto &i : target_index_map.at(hash)) {
                             if (target_hashes[i] == "") {
                                 target_hashes[i] = str + digits;
                                 ++success;
@@ -401,7 +401,10 @@ void PasswordCracker::common_password_salt_transform(const string &path) {
         index_map[data[i][1]].push_back(i);
     }
 
-    int success = 0;
+    atomic<int> success(0);
+    int n = thread::hardware_concurrency();
+    int div = 10000 / n;
+
     for (auto hash_pass : hashed_to_password) {
         string hash = hash_pass.first;
         if (index_map.count(hash)) {
@@ -415,7 +418,25 @@ void PasswordCracker::common_password_salt_transform(const string &path) {
         }
     }
 
-    worker_task_salt_transform(0, 10000, all_salts, all_4_digits, index_map, all_hashes, success);
+    for (int i = 0; i < n; ++i) {
+        threads.emplace_back(bind(
+            &PasswordCracker::worker_task_salt_transform,
+            this,
+            i * div,
+            (i + 1) * div,
+            all_salts,
+            all_4_digits,
+            index_map,
+            ref(all_hashes),
+            ref(success)
+        ));
+    }
+
+    for (auto &t : threads) {
+        if (t.joinable()) {
+            t.join();
+        }
+    }
 
 output:;
     for (size_t i = 0; i < data.size(); ++i) {
