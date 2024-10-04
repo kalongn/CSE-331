@@ -156,9 +156,12 @@ void PasswordCracker::worker_task_salt_transform(const int &begin, const int &en
                     string hash = compute_MD5(temp_comp + salt);
                     if (target_index_map.find(hash) != target_index_map.end()) {
                         for (const auto &i : target_index_map.at(hash)) {
-                            if (target_hashes[i] == "") {
-                                target_hashes[i] = str + digits;
-                                ++success;
+                            {
+                                unique_lock<std::mutex> lock(mutex);
+                                if (target_hashes[i] == "") {
+                                    target_hashes[i] = str + digits;
+                                    ++success;
+                                }
                             }
                         }
                     }
@@ -168,9 +171,12 @@ void PasswordCracker::worker_task_salt_transform(const int &begin, const int &en
                 }
             }
         }
-        auto current_time = chrono::high_resolution_clock::now();
-        cout << this_thread::get_id() << ", finish checking all transformation of \"" << common_password.at(i) << "\" Time: " << chrono::duration_cast<chrono::seconds>(current_time - start_time).count() << " seconds" << endl;
-        cout.flush();
+        {
+            unique_lock<std::mutex> lock(print_mutex);
+            auto current_time = chrono::high_resolution_clock::now();
+            cout << this_thread::get_id() << ", finish checking all transformation of \"" << common_password.at(i) << "\" Time: " << chrono::duration_cast<chrono::seconds>(current_time - start_time).count() << " seconds" << endl;
+            cout.flush();
+        }
     }
 }
 
