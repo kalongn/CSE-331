@@ -7,6 +7,8 @@
 #include <utility>
 #include <vector>
 #include <map>
+#include <cmath>
+#include <cfloat>
 
 class VigenereCipher {
 private:

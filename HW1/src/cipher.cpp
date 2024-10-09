@@ -58,7 +58,7 @@ double VigenereCipher::chi_squared_test(const map<char, double> &relative_freque
 
 
 char VigenereCipher::find_key(const string &column) {
-    double min_chi_squared = MAXFLOAT;
+    double min_chi_squared = DBL_MAX;
     char best_shift = 0;
     for (auto shift = 0; shift < ALPHABET_SIZE; shift++) {
         map<char, double> rel_freq = find_relative_frequency(caesar_shift(column, shift));
