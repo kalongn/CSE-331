@@ -41,3 +41,8 @@ Thumbs.db
 bin/
 build/
 .vscode/
+
+# CUSTOME #
+###########
+root-login.sh
+*.pem
