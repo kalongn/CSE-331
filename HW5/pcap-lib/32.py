@@ -82,7 +82,7 @@ plt.show()
 print("Unique sources: " + str(len(sources)))
 print("Unique destinations: " + str(len(destinations)))
 
-sorted_bytes = sorted(sources_byte.values())
+sorted_bytes = sorted(sizes)
 cdf = np.arange(1, len(sorted_bytes) + 1) / float(len(sorted_bytes))
 
 plt.plot(sorted_bytes, cdf, marker="o", linestyle="--")
